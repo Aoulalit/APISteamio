@@ -3,18 +3,40 @@ const { pool } = require('../config/database');
 
 const router = express.Router();
 
-router.post('/islogged', (req, res) => {
+router.post('/islogged', async (req, res) => {
     const { mail } = req.body;
-    if (mail) {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false });
+
+    if (!mail) {
+        return res.status(400).json({ success: false, error: 'Email non fourni.' });
+    }
+
+    try {
+        const [user] = await pool.query('SELECT * FROM utilisateur WHERE email = ?', [mail]);
+
+        if (user.length === 0) {
+            return res.status(404).json({ success: false, error: 'Utilisateur non trouvé.' });
+        }
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Erreur lors de la vérification de connexion:', error);
+        res.status(500).json({ success: false, error: 'Erreur interne du serveur.' });
     }
 });
 
-router.get('/', async (req, res) => {  // Utilisation de '/' pour correspondre à '/api/products'
+router.get('/', async (req, res) => {
+    const { sortBy } = req.query;  // Récupère le paramètre de tri envoyé depuis le front-end
+
+    let query = 'SELECT * FROM produit';
+
+    if (sortBy === 'nameAsc') {
+        query += ' ORDER BY nom ASC';  // Trier par nom de A à Z
+    } else if (sortBy === 'nameDesc') {
+        query += ' ORDER BY nom DESC';  // Trier par nom de Z à A
+    }
+
     try {
-        const [rows] = await pool.query('SELECT * FROM produit');
+        const [rows] = await pool.query(query);
         res.json(rows);
     } catch (error) {
         console.error('Erreur lors de la récupération des produits:', error);
@@ -62,8 +84,6 @@ router.put('/editproduct/:id', async (req, res) => {
         return res.status(500).json({ error: 'Erreur interne du serveur.' });
     }
 });
-
-
 
 router.delete('/deleteproduct', async (req, res) => {
     try {
