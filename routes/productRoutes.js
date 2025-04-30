@@ -66,18 +66,17 @@ router.post('/addproduct', async (req, res) => {
 
 router.put('/editproduct/:id', async (req, res) => {
     const id = req.params.id;
-    const { nom, prix, caracteristiques } = req.body;
-    console.log(req.body, id);
+    const { nom, prix, caracteristiques, image } = req.body;
 
-    if (!nom || !prix || !caracteristiques) {
-        return res.status(400).json({ error: 'Nom, prix et caractéristiques sont obligatoires.' });
+    if (!nom || !prix || !caracteristiques || !image) {
+        return res.status(400).json({ error: 'Nom, prix, caractéristiques et image sont obligatoires.' });
     }
 
-    const sql = 'UPDATE produit SET nom = ?, prix = ?, caracteristique = ? WHERE id_produit = ?';
+    const sql = 'UPDATE produit SET nom = ?, prix = ?, caracteristique = ?, image = ? WHERE id_produit = ?';
 
     try {
-        console.log("Données reçues pour la mise à jour du produit:", { nom, prix, caracteristiques, id });
-        await pool.query(sql, [nom, prix, caracteristiques, id]);
+        console.log("Données reçues pour la mise à jour du produit:", { nom, prix, caracteristiques, image, id });
+        await pool.query(sql, [nom, prix, caracteristiques, image, id]);
         res.json({ message: 'Produit mis à jour avec succès' });
     } catch (err) {
         console.error('Erreur lors de la mise à jour du produit:', err);

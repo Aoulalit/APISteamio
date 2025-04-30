@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const corsMiddleware = require('./middlewares/corsMiddleware');
 const { pool } = require('./config/database');
 
@@ -12,18 +13,7 @@ const commandesRoutes = require('./routes/commandesRoutes');  // Importer le fic
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// Middleware
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-  next();
-});
-
+// ✅ Middleware
 app.use(corsMiddleware);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

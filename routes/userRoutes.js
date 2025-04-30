@@ -29,81 +29,60 @@ router.get('/utilisateurs', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-      const { email, motdepasse } = req.body;
-  
-      // Vérifie si l'utilisateur existe dans la base de données
-      const [user] = await pool.query('SELECT * FROM utilisateur WHERE email = ?', [email]);
-  
-      if (user.length === 0) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé.' });
-      }
-  
-      // Compare le mot de passe
-      const passwordMatch = await bcrypt.compare(motdepasse, user[0].motdepasse);
-      if (!passwordMatch) {
-        return res.status(401).json({ error: 'Mot de passe incorrect.' });
-      }
-  
-      // Connexion réussie, renvoie les données utilisateur (ex: ID et email)
-      res.status(200).json({
-        success: true,
-        id: user[0].id_utilisateur,
-        email: user[0].email,
-      });
-    } catch (error) {
-      console.error('Erreur lors de la connexion:', error);
-      res.status(500).json({ error: 'Erreur interne du serveur.' });
-    }
-  });
+        const { email, motdepasse } = req.body;
 
-router.put('/edit', async (req, res) => {
-    try {
-        const { id, email, motdepasse, admin } = req.body;
-        const [user] = await pool.query('SELECT * FROM utilisateur WHERE id_utilisateur = ?', [id]);
+        // Vérifie si l'utilisateur existe dans la base de données
+        const [user] = await pool.query('SELECT * FROM utilisateur WHERE email = ?', [email]);
 
         if (user.length === 0) {
             return res.status(404).json({ error: 'Utilisateur non trouvé.' });
         }
 
-        let hashedPassword = user[0].motdepasse;
-        if (motdepasse) {
-            hashedPassword = await bcrypt.hash(motdepasse, 10);
+        // Compare le mot de passe
+        const passwordMatch = await bcrypt.compare(motdepasse, user[0].motdepasse);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Mot de passe incorrect.' });
         }
 
-        await pool.query('UPDATE utilisateur SET email = ?, motdepasse = ?, admin = ? WHERE id_utilisateur = ?', [email, hashedPassword, admin, id]);
-        res.status(200).json({ success: true });
+        // Connexion réussie, renvoie les données utilisateur (ex: ID et email)
+        res.status(200).json({
+            success: true,
+            id: user[0].id_utilisateur,
+            email: user[0].email,
+        });
     } catch (error) {
-        console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+        console.error('Erreur lors de la connexion:', error);
         res.status(500).json({ error: 'Erreur interne du serveur.' });
     }
 });
+
 router.post('/changePassword', async (req, res) => {
     try {
-      const { email, oldPassword, newPassword } = req.body;
-  
-      // Récupérer l'utilisateur
-      const [user] = await pool.query('SELECT * FROM utilisateur WHERE email = ?', [email]);
-      
-      if (user.length === 0) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé.' });
-      }
-  
-      // Comparer l'ancien mot de passe
-      const passwordMatch = await bcrypt.compare(oldPassword, user[0].motdepasse);
-      if (!passwordMatch) {
-        return res.status(401).json({ error: 'Ancien mot de passe incorrect.' });
-      }
-  
-      // Hasher le nouveau mot de passe
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await pool.query('UPDATE utilisateur SET motdepasse = ? WHERE email = ?', [hashedPassword, email]);
-  
-      res.status(200).json({ success: true, message: 'Mot de passe changé avec succès.' });
+        const { email, oldPassword, newPassword } = req.body;
+
+        // Récupérer l'utilisateur
+        const [user] = await pool.query('SELECT * FROM utilisateur WHERE email = ?', [email]);
+
+        if (user.length === 0) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        }
+
+        // Comparer l'ancien mot de passe
+        const passwordMatch = await bcrypt.compare(oldPassword, user[0].motdepasse);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Ancien mot de passe incorrect.' });
+        }
+
+        // Hasher le nouveau mot de passe
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE utilisateur SET motdepasse = ? WHERE email = ?', [hashedPassword, email]);
+
+        res.status(200).json({ success: true, message: 'Mot de passe changé avec succès.' });
     } catch (error) {
-      console.error('Erreur lors du changement de mot de passe:', error);
-      res.status(500).json({ error: 'Erreur interne du serveur.' });
+        console.error('Erreur lors du changement de mot de passe:', error);
+        res.status(500).json({ error: 'Erreur interne du serveur.' });
     }
-  });
+});
 
 // Récupérer tous les utilisateurs
 router.get('/users', async (req, res) => {
@@ -141,19 +120,19 @@ router.post('/user', async (req, res) => {
 // Modifier un utilisateur existant
 router.put('/user/edit', async (req, res) => {
     try {
-        const { id, email, motdepasse, admin } = req.body;
+        const { id_utilisateur, email, motdepasse, admin } = req.body;
 
-        const [user] = await pool.query('SELECT * FROM utilisateur WHERE id_utilisateur = ?', [id]);
+        const [user] = await pool.query('SELECT * FROM utilisateur WHERE id_utilisateur = ?', [id_utilisateur]);
         if (user.length === 0) {
             return res.status(404).json({ error: 'Utilisateur non trouvé.' });
         }
 
         let hashedPassword = user[0].motdepasse;
-        if (motdepasse) {
+        if (motdepasse && motdepasse.trim() !== "") {
             hashedPassword = await bcrypt.hash(motdepasse, 10);
         }
 
-        await pool.query('UPDATE utilisateur SET email = ?, motdepasse = ?, admin = ? WHERE id_utilisateur = ?', [email, hashedPassword, admin, id]);
+        await pool.query('UPDATE utilisateur SET email = ?, motdepasse = ?, admin = ? WHERE id_utilisateur = ?', [email, hashedPassword, admin, id_utilisateur]);
         res.status(200).json({ success: true, message: 'Utilisateur mis à jour.' });
     } catch (error) {
         console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
